@@ -8,8 +8,9 @@ def suffix_array_construction(text):
     l=[]
     for i in sorted(list(lexi_dic.keys())):
         l.append(lexi_dic[i])
-    return l
     #print(", ".join(l))
+    return l
+    
 
 def Burrows_Wheeler_transformation(Text):
     matrix=[]
