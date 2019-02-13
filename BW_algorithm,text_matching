@@ -1,0 +1,241 @@
+import copy
+
+
+def suffix_array_construction(text):
+    lexi_dic={}
+    for i in range(len(text)):
+        lexi_dic[text[i:]]=i
+    l=[]
+    for i in sorted(list(lexi_dic.keys())):
+        l.append(lexi_dic[i])
+    return l
+    #print(", ".join(l))
+
+def Burrows_Wheeler_transformation(Text):
+    matrix=[]
+    for i in range(len(Text)):
+        text=Text[i:]+Text[:i]
+        matrix.append(text)
+    matrix.sort()
+    l=[]
+    for rotation in matrix:
+        l.append(rotation[-1])
+        #print(rotation[-1],end="")
+    return "".join(l)
+
+
+
+def reverse_Burrows_Wheeler_transformation(Transform):
+    first_column=sorted([i for i in Transform])
+    Transform=[i for i in Transform]
+    index_dic={}
+    for i in range(len(Transform)):
+        index_dic[Transform[i]]=index_dic.get(Transform[i],[])+[i]
+    original_string=""
+    index=Transform.index("$")
+    next_character=first_column[index]
+    original_string+=next_character
+    while next_character!="$":
+        repeat_num=first_column[:index].count(next_character)
+        index=index_dic[next_character][repeat_num]
+        next_character=first_column[index]
+        original_string+=next_character
+    print(original_string)
+
+
+def BWMatching(BW_Text,patterns):
+    l=len(BW_Text)
+    patterns=patterns.split()
+    first_column = "".join(sorted([i for i in BW_Text]))
+    b_to_f={}
+    f=[i for i in first_column]
+    b=[i for i in BW_Text]
+    for i in range(len(first_column)):
+        letter=f[i]
+        b_index=b.index(letter)
+        b_to_f[b_index]=i
+        b[b_index]=None
+
+    for pattern in patterns:
+        hit_list=[i for i in range(l) if first_column[i]==pattern[-1]]
+        for letter in pattern[:-1][::-1]:
+            n_hit=[i for i in hit_list if BW_Text[i]==letter]
+            hit_list=[b_to_f[i] for i in n_hit]
+        print(len(hit_list),end=" ")
+
+
+
+def betterBWMatching(Text,patterns):
+    patterns=patterns.split()
+    characters={i for i in Text}
+    characters=sorted([i for i in characters])
+    FirstOccurrence={}
+    count={i:0 for i in characters}
+    for letter in Text:
+        count[letter]+=1
+    c=0
+    for character in characters:
+        FirstOccurrence[character]=c
+        c+=count[character]
+
+    def Count(position,symbol):
+        return Text.count(symbol,0,position)
+
+    for pattern in patterns:
+        top = 0
+        bottom = len(Text) - 1
+        while top<=bottom and pattern:
+            symbol=pattern[-1]
+            pattern=pattern[:-1]
+            top=FirstOccurrence[symbol]+Count(top,symbol)
+            bottom=FirstOccurrence[symbol]+Count(bottom+1,symbol)-1
+
+        print(bottom-top+1,end=" ")
+
+
+def partial_suffix_array(Text,k):
+    suffix_array=suffix_array_construction(Text)
+    partial_array={}
+    for i in range(len(suffix_array)):
+        if suffix_array[i]%k==0 :
+            partial_array[i]=suffix_array[i]
+            #print(i,suffix_array[i],sep=",")
+    return partial_array
+
+
+def Multiple_Pattern_Matching(Text,patterns):
+    """Input: A string Text followed by a collection of strings Patterns.
+       Output: All starting positions in Text where a string from Patterns appears as a substring."""
+    Text=Text+"$"
+    Last_column=Burrows_Wheeler_transformation(Text)
+
+    patterns = patterns.split()
+    characters = {i for i in Text}
+    characters = sorted([i for i in characters])
+    FirstOccurrence = {}
+    count = {i: 0 for i in characters}
+    for letter in Text:
+        count[letter] += 1
+    c = 0
+    for character in characters:
+        FirstOccurrence[character] = c
+        c += count[character]
+    character_index={characters[i]:i for i in range(len(characters))}
+
+    k=10
+    Count=[]
+    #building check-point array
+    for i in range(len(Text)+2):
+        if i%k==0:
+            Count.append([Last_column.count(c,0,i) for c in characters])
+
+    def count_translation(symbol,position):
+        return Count[position//k][character_index[symbol]]+Last_column.count(symbol,(position//k)*k,position)
+
+    PS_array=partial_suffix_array(Text,k)
+
+    for pattern in patterns:
+        top = 0
+        bottom = len(Text) - 1
+        while top <= bottom and pattern:
+            symbol = pattern[-1]
+            pattern = pattern[:-1]
+
+            top = FirstOccurrence[symbol] + count_translation(symbol,top)
+
+            bottom = FirstOccurrence[symbol] + count_translation(symbol,bottom+1) - 1
+
+
+        #print(bottom - top + 1, end=" ")
+
+        for index in range(top,bottom+1):
+            n=0
+            while index not in PS_array:
+                n+=1
+                end_letter=Last_column[index]
+                index=count_translation(end_letter,index+1)+FirstOccurrence[end_letter]-1
+            print(PS_array[index]+n,end=" ")
+
+
+def Multiple_Approximate_Pattern_Matching(Text,patterns,d):
+    """Input: A string Text, followed by a collection of strings Patterns, and an integer d.
+       Output: All positions where one of the strings in Patterns appears as a substring of Text with at most d mismatches."""
+    Text=Text+"$"
+
+    BW_Text=Burrows_Wheeler_transformation(Text)
+    l = len(BW_Text)
+    patterns = patterns.split()
+    first_column = "".join(sorted([i for i in BW_Text]))
+    b_to_f = {}
+    f = [i for i in first_column]
+    b = [i for i in BW_Text]
+    for i in range(len(first_column)):
+        letter = f[i]
+        b_index = b.index(letter)
+        b_to_f[b_index] = i
+        b[b_index] = None
+
+    #PS_array=partial_suffix_array(Text,10)
+    suffix_array=suffix_array_construction(Text)
+
+    for pattern in patterns:
+        hit_list={}
+        letter=pattern[-1]
+        for i in range(l):
+            hit_list[i]=0 if first_column[i] == letter else 1
+        #hit_list = {i:0 for i in range(l) if first_column[i] == pattern[-1]}
+        pattern=pattern[:-1]
+        while pattern :
+            n_hit={}
+            letter=pattern[-1]
+            pattern=pattern[:-1]
+            for hit in hit_list.keys():
+                if BW_Text[hit]!=letter:
+                    if hit_list[hit]+1<=d and BW_Text[hit]!="$":
+                        n_hit[b_to_f[hit]]=hit_list[hit]+1
+                else:
+                    n_hit[b_to_f[hit]] = hit_list[hit]
+            hit_list = copy.deepcopy(n_hit)
+
+        for index in hit_list.keys():
+
+            '''n = 0
+            while index not in PS_array:
+                n += 1
+                index = b_to_f[index]
+
+            lll.append(str(PS_array[index] + n))'''
+            #print(PS_array[index] + n, end=" ")
+            print(suffix_array[index],end=" ")
+
+
+
+
+if __name__=="__main__":
+    t=""  #To be filled in
+    Burrows_Wheeler_transformation(t)
+    
+    t=""
+    suffix_array_construction(t)
+    
+    
+    text='TCCTCTATGAGATCCTATTCTATGAAACCTTCA$GACCAAAATTCTCCGGC'
+    pattern='CCT CAC GAG CAG ATC'
+    BWMatching(text,pattern)
+    
+    text='GGCGCCGC$TAGTCACACACGCCGTA'
+    pattern='ACC CCG CAG'
+    betterBWMatching(text,pattern)
+    
+    t="PANAMABANANAS$"
+    partial_suffix_array(t,5)
+    
+    t="AATCGGGTTCAATCGGGGT"
+    p="""ATCG
+    GGGT"""
+    Multiple_Pattern_Matching(t,p)
+    
+    tt="ACATGCTACTTT"
+    pp="ATT GCC GCTA TATT"
+    #Multiple_Approximate_Pattern_Matching(tt,pp,2)
+    
