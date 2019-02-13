@@ -1,0 +1,108 @@
+from math import inf
+import copy
+
+def UPGMA_implementation(matrix):
+    n=len(matrix)
+    increment=n
+    parent_nodes={i:i for i in matrix}
+    Number={i:1 for i in matrix.keys()}
+    age=dict.fromkeys(matrix.keys(),0)
+    while n>1:
+        min_dis=inf;left,right=None,None
+        for i in matrix.keys():
+            for j in matrix.keys():
+                if i==j :
+                    continue
+                if matrix[i][j]<min_dis:
+                    left=i; right=j
+                    min_dis=matrix[i][j]
+        parent=increment; increment+=1
+        parent_nodes[(left,right)]=parent
+        Number[(left,right)]=Number[left]+Number[right]
+        age[parent]=min_dis/2
+        print("{}->{}:{}".format(parent_nodes[left], parent,"%0.2f"% ((min_dis/2)-age[parent_nodes[left]] )))
+        print("{}->{}:{}".format(parent , parent_nodes[left], "%0.2f" % ((min_dis / 2) - age[parent_nodes[left]])))
+        print("{}->{}:{}".format(parent_nodes[right],parent, "%0.2f" % ((min_dis/2)-age[parent_nodes[right]] )))
+        print("{}->{}:{}".format(parent, parent_nodes[right], "%0.2f" % ((min_dis / 2) - age[parent_nodes[right]])))
+        matrix.pop(left); matrix.pop(right)
+        matrix[left,right]={}
+        for entry in matrix:
+            if entry!=(left,right):
+                matrix[entry][(left,right)]=matrix[(left,right)][entry]=(matrix[entry][left]*Number[left]+matrix[entry][right]*Number[right])/(Number[left]+Number[right])
+                matrix[entry].pop(left); matrix[entry].pop(right)
+        n=len(matrix)
+
+"""
+aaa='''0 20 9 11
+20 0 17 11
+9 17 0 8
+11 11 8 0'''.split("\n")
+aaa=[[int(i) for i in j.split()] for j in aaa]
+aaa={i:{a:b for a,b in enumerate(j)} for i,j in enumerate(aaa)}
+UPGMA_implementation(aaa)
+print("\n\n\n")"""
+
+
+def neighbor_matrix(matrix):
+    n=len(matrix)
+    n_matrix=copy.deepcopy(matrix)
+    total_length={i:sum(matrix[i].values()) for i in matrix.keys()}
+    for i in matrix.keys():
+        for j in matrix.keys():
+            if i==j:
+                continue
+            n_matrix[i][j]=(n-2)*matrix[i][j]-total_length[i]-total_length[j]
+
+    return n_matrix
+
+
+def neighbor_joining(matrix):
+    n=len(matrix)
+    increment=n
+    parent_nodes={i:i for i in matrix}
+    while n>1:
+        if n==2:
+            one,two=matrix.keys()
+            print("{}->{}:{}".format(parent_nodes[one], parent_nodes[two], "%0.2f" % matrix[one][two]))
+            print("{}->{}:{}".format(parent_nodes[two], parent_nodes[one], "%0.2f" % matrix[one][two]))
+            break
+        n_matrix=neighbor_matrix(matrix)
+        min_dis=inf;left,right=None,None
+        for i in matrix.keys():
+            for j in matrix.keys():
+                if i==j :
+                    continue
+                if n_matrix[i][j]<min_dis:
+                    left=i; right=j
+                    min_dis=n_matrix[i][j]
+        parent=increment; increment+=1
+        parent_nodes[(left,right)]=parent
+        total_l=sum(matrix[left].values())
+        total_r=sum(matrix[right].values())
+        delta=((total_l-total_r)/(n-2) )
+        limb_l=((matrix[left][right]+delta)/2)
+        limb_r=((matrix[left][right]-delta)/2)
+        print("{}->{}:{}".format(parent_nodes[left], parent,"%0.2f"% limb_l))
+        print("{}->{}:{}".format(parent , parent_nodes[left], "%0.2f" % limb_l ))
+        print("{}->{}:{}".format(parent_nodes[right],parent, "%0.2f" % limb_r ))
+        print("{}->{}:{}".format(parent, parent_nodes[right], "%0.2f" % limb_r ))
+        matrix[left,right]={}
+        pseudo_matrix=copy.deepcopy(matrix)
+        pseudo_matrix.pop(left); pseudo_matrix.pop(right)
+        for entry in pseudo_matrix:
+            if entry!=(left,right) :
+                pseudo_matrix[entry][(left,right)]=pseudo_matrix[(left,right)][entry]=(matrix[entry][left]+matrix[entry][right]-matrix[left][right])/2
+                pseudo_matrix[entry].pop(left); pseudo_matrix[entry].pop(right)
+        matrix=copy.deepcopy(pseudo_matrix)
+        n=len(matrix)
+
+
+if __name__=="__main__":
+  	aaa='''0 20 9 11
+		20 0 17 11
+		9 17 0 8
+		11 11 8 0'''.split("\n")
+		aaa=[[int(i) for i in j.split()] for j in aaa]
+		aaa={i:{a:b for a,b in enumerate(j)} for i,j in enumerate(aaa)}
+		neighbor_joining(aaa)
+		#print(neighbor_matrix(aaa))
