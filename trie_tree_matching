@@ -1,0 +1,290 @@
+
+
+
+def trie_construction(strings):
+    trie={0:{}};number=1
+    for string in strings:
+        length=len(string)
+        node=0
+        for i in range(length):
+            character=string[i]
+            if character not in trie[node].keys():
+                trie[node][character]=number
+                #print("{}->{}:{}".format(node,number,character))
+                node=number
+                trie[number]={}
+                number+=1
+            else:
+                node=trie[node][character]
+    return t
+
+def trie_matching(text,patterns):
+    trie=trie_construction(patterns)
+    length=len(text)
+    def prefix_trie_matching(Text,trie):
+        node=0
+        for i in range(len(Text)):
+            character=Text[i]
+            try:
+                next_node=trie[node][character]
+                node=next_node
+            except KeyError:
+                if not trie[node]:
+                    return True
+                return
+        return True
+    while text:
+        if len(text)<min([len(i) for i in patterns]):
+            break
+        if prefix_trie_matching(text,trie):
+            print(length-len(text),end=" ")
+        text=text[1:]
+
+
+def  ModifiedSuffixTrieConstruction(Text):
+    Trie={'root':{}}
+    Symbol={}
+    Position={}
+    length=len(Text)
+    count=0
+    for i in range(length):
+        current_node="root"
+        for j in range(i,length):
+            letter=Text[j]
+            if letter in Trie[current_node]:
+                current_node=Trie[current_node][letter]
+            else:
+                Trie[current_node][letter]=count
+                Trie[count]={}
+                Symbol[(current_node,count)]=letter
+                Position[(current_node,count)]=j
+                current_node=count
+                count+=1
+        if not Trie[current_node]:
+            Trie[current_node]=i
+    return Trie,Symbol,Position
+
+def  MaximalNonBranchingPaths(Graph):
+    tree=[]
+    path=[]
+    in_dic={}
+    for node in Graph.keys():
+        if type(Graph[node]) is list:
+            in_dic[node]=in_dic.get(node,[])
+            for n in Graph[node]:
+                in_dic[n]=in_dic.get(n,[])+[node]
+
+    for node in Graph.keys():
+        if type(Graph[node]) is list:
+            if len(Graph[node])>1 or len(in_dic[node])>1:
+                for children in Graph[node]:
+                    non_branching_path=[node,children]
+                    next=children
+                    tree.extend([node,next])
+                    if type(Graph[next]) is list:
+                        while len(Graph[next])==1 and len(in_dic[next])==1:
+                            next=Graph[next][0]
+                            non_branching_path.append(next)
+                            tree.append(next)
+                            if type(Graph[next]) is not list:
+                                break
+                    path.append(non_branching_path)
+
+    root="root"
+    if len(Graph[root])==1:
+        for child in Graph[root]:
+            non_branching_path = [root, child]
+            next = child
+            tree.extend([root, next])
+            if type(Graph[next]) is list:
+                while len(Graph[next]) == 1 and len(in_dic[next]) == 1:
+                    next = Graph[next][0]
+                    non_branching_path.append(next)
+                    tree.append(next)
+                    if type(Graph[next]) is not list:
+                        break
+            path.append(non_branching_path)
+
+    """for a_path in path:
+        a_path=[str(i) for i in a_path]
+        print(" -> ".join(a_path))"""
+
+    '''cycles=set([i for i in Graph.keys()]+[i for i in in_dic.keys()])-set(tree)
+    cycles=list(cycles)
+    cir_path=[]
+    while cycles:
+        circle=[]
+        start=cycles.pop()
+        circle.append(start)
+        next=Graph[start][0]
+        while next!=start:
+            cycles.remove(next)
+            circle.append(next)
+            next=Graph[next][0]
+        cir_path.append(circle)
+    for c_path in cir_path:
+            c_path.append(c_path[0])
+            c_path = [str(i) for i in c_path]
+            print(" -> ".join(c_path))'''
+    return pat
+
+def ModifiedSuffixTreeConstruction(Text):
+    Trie,Symbol,Position=ModifiedSuffixTrieConstruction(Text)
+    graph={i:[j for j in Trie[i].values()] for i in Trie.keys() if type(Trie[i]) is dict}
+    graph.update({i:Trie[i] for i in Trie.keys() if type(Trie[i]) is int})
+    paths=MaximalNonBranchingPaths(graph)
+    #for path in paths:
+    #    string=""
+    #    for index in range(len(path)-1):
+    #        string+=Symbol[(path[index],path[index+1])]
+    #    print(string)
+    return paths,Symb
+
+def longest_repeat_in_string(string):
+    Trie = {'root': {}}
+    Symbol = {}
+    Position = {}
+    length = len(string)
+    longest_repeat=[]
+    count = 0
+    for i in range(length):
+        traverse=["root"]
+        current_node = "root"
+        branch=[]
+        for j in range(i, length):
+            letter = string[j]
+            if letter in Trie[current_node]:
+                current_node = Trie[current_node][letter]
+                traverse.append(current_node)
+            else:
+                branch.append(current_node)
+                Trie[current_node][letter] = count
+                Trie[count] = {}
+                Symbol[(current_node, count)] = letter
+                Position[(current_node, count)] = j
+                current_node = count
+                traverse.append(current_node)
+                count += 1
+            if j==length-1:
+                if branch :
+                    index=traverse.index(branch[0])
+                    traverse=traverse[:index+1]
+                if len(traverse)>len(longest_repeat):
+                    longest_repeat=traverse[:]
+        if not Trie[current_node]:
+            Trie[current_node] = i
+    string=""
+    for index in range(len(longest_repeat)-1):
+        string+=Symbol[(longest_repeat[index],longest_repeat[index+1])]
+    print(string)
+
+'''GGAAGGCAACCTGAATACTTATGGAGGAAAATGAATGCCAGTCCTTTGCCAGCATGGAACATTCTATGGTATACG'''
+
+def TreeColoring(Graph):
+    tree, color = Graph
+    tree = tree.split("\n")
+    color = color.split("\n")
+    graph = {}
+    for entry in tree:
+        _out, _in = entry.split(" -> ")
+        if _in == "{}":
+            graph[int(_out)] = []
+        else:
+            graph[int(_out)] = [int(i) for i in _in.split(",")]
+    coloring = {}
+    for entry in color:
+        node, c = entry.split(": ")
+        coloring[int(node)] = c
+
+    finished=[i for i in coloring.keys()]
+    nodes=[i for i in graph.keys() if i not in finished]
+    while nodes:
+        for node in nodes:
+            childs=graph[node]
+            ripe=all(map(lambda x :x in coloring.keys(),childs))
+            if ripe:
+                if len(set([coloring[i] for i in childs]))==1:
+                    coloring[node]=coloring[childs[0]]
+                else:
+                    coloring[node]="purple"
+                finished.append(node)
+        nodes = [i for i in graph.keys() if i not in finished]
+    for i in coloring.keys():
+        print("{}: {}".format(str(i),coloring[i]))
+
+
+def tree_coloring_v2(graph,symbol,n):
+    inter_nodes={path[0] for path in graph if path[0]!="root"}
+    leaves={path[-1] for path in graph if path[-1] not in inter_nodes}
+    leaves=sorted(list(leaves))
+    color={leaves[i]:"blue" for i in range(n+1)}
+    color.update({leaves[i]:"red" for i in range(n+1,len(leaves))})
+    children_dic={}
+    for path in graph:
+        parent,child=path[0],path[-1]
+        children_dic[parent]=children_dic.get(parent,[])+[child]
+    while len(color)!=len(leaves)+len(inter_nodes):
+        for node in inter_nodes:
+            try:
+                Color = {color[i] for i in children_dic[node]}
+                if len(Color)==2:
+                    color[node]="purple"
+                else:
+                    color[node]=list(Color)[0]
+            except KeyError:
+                continue
+    color["root"]="purple"
+    return color, children_dic
+
+
+
+
+def longest_shared_substring(text1,text2):
+    string=text1+"#"+text2+"$"
+    tree,Symbol=ModifiedSuffixTreeConstruction(string)
+    n=len(text1)
+    Color,children_dic=tree_coloring_v2(tree,Symbol,n)
+    purple_nodes=[node for node in Color if Color[node]=="purple" and node!="root"]
+
+    max_length=0; long_path=[]
+    for node in purple_nodes:
+        path=[i for i in tree if i[-1]==node][0]
+        t_path=path[:]
+        parent=path[0]
+        while parent!="root":
+            path=[i for i in tree if i[-1]==parent][0]
+            t_path=path[:-1]+t_path
+            parent=path[0]
+        if len(t_path)>max_length:
+            max_length=len(t_path)
+            long_path=t_path[:]
+
+    string=""
+    for index in range(len(long_path)-1):
+        string+=Symbol[(long_path[index],long_path[index+1])]
+    print(string)
+
+
+
+
+if __name__=="__main__":
+    '''data="""ATAGA
+    ATC
+    GAT""".split()
+    print(trie_construction(data))'''
+    '''aaa="""1 -> 2
+    2 -> 3
+    3 -> 4,5
+    6 -> 7
+    7 -> 6""".split("\n")
+    graph={}
+    for entry in aaa:
+        _in, _out=entry.split("->")
+        graph[int(_in)]=graph.get(int(_in),[])+[int(i) for i in _out.split(",")]
+        graph.update({j:graph.get(j,[])  for j in  [int(i) for i in _out.split(",")]})
+    MaximalNonBranchingPaths(graph)'''
+    '''text="ATAAATG$"
+    path,symbol=ModifiedSuffixTreeConstruction(text)'''
+    '''aa="""TCGGTAGATTGCGCCCACTC
+    AGGGGCTCGCAGTGTAAGAA""".split("\n")
+    longest_shared_substring(aa[0],aa[1])'''
