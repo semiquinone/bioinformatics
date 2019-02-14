@@ -1,0 +1,351 @@
+import decimal
+
+
+
+def probability_of_hidden_path(string,matrix):
+    matrix=matrix.split("\n")
+    matrix=[[ j  for j in line.strip().split("\t")]  for line in matrix]
+    matrix={matrix[i+1][0]:{matrix[0][j]:float(matrix[i+1][j+1])  for j in range(len(matrix[0]))   } for i in range(len(matrix)-1)}
+    pr=1*1/len(matrix)
+    for index in range(len(string)-1):
+        pr*=matrix[string[index]][string[index+1]]
+    return pr
+
+
+def pro_of_an_outcome_given_a_hidden_path(data):
+    string,path,matrix=data[0],data[2],data[4]
+    matrix = matrix.split("\n")
+    matrix = [[j for j in line.strip().split("\t")] for line in matrix]
+    matrix = {matrix[i + 1][0]: {matrix[0][j]: float(matrix[i + 1][j + 1]) for j in range(len(matrix[0]))} for i in range(len(matrix) - 1)}
+    assert len(string)==len(path)
+    pr=1
+    for index in range(len(string)):
+        pr*=matrix[path[index]][string[index]]
+    print(pr)
+
+
+def decoding_problem(data):
+    emission,transition_matrix,emission_matrix=data[0],data[3],data[4]
+    transition_matrix = transition_matrix.split("\n")
+    transition_matrix = [[j for j in line.strip().split("\t")] for line in transition_matrix]
+    transition_matrix = {transition_matrix[i + 1][0]: {transition_matrix[0][j]: Decimal(transition_matrix[i + 1][j + 1]) for j in range(len(transition_matrix[0]))} for i in
+              range(len(transition_matrix) - 1)}
+    emission_matrix = emission_matrix.split("\n")
+    emission_matrix = [[j for j in line.strip().split("\t")] for line in emission_matrix]
+    emission_matrix = {emission_matrix[i + 1][0]: {emission_matrix[0][j]: Decimal(emission_matrix[i + 1][j + 1]) for j in range(len(emission_matrix[0]))} for i in
+              range(len(emission_matrix) - 1)}
+    states=[i for i in transition_matrix.keys()]
+    init_pro=Decimal(1/len(states))
+    score_dict={0:{i:emission_matrix[i][emission[0]]*init_pro for i in states} }
+    for index in range(1,len(emission)):
+        score_dict[index]={}
+        for state in states:
+            pro=max([ score_dict[index-1][i]*transition_matrix[i][state]*emission_matrix[state][emission[index]] for i in states ])
+            score_dict[index][state]=pro
+
+    print(score_dict)
+
+    path=[ i for i in    score_dict[index].keys() if score_dict[index][i]==max(score_dict[index].values())][0]
+
+    for index in range(len(emission)-2,-1,-1):
+        precision=str(score_dict[index]["A"])
+        try:
+            power=precision.index("-",)
+            power=int(precision[power+1:])
+            power+=5
+        except ValueError:
+            power=len(precision)-4
+        _next=[ i for i in states if round(score_dict[index+1][path[-1]],power)== round(score_dict[index][i]*(emission_matrix[path[-1]][emission[index+1]]*transition_matrix[i][path[-1]]),power) ]
+        path+=_next[0]
+    print(path[::-1])
+
+
+
+
+def outcome_likelihood(data):
+    emission, transition_matrix, emission_matrix = data[0], data[3], data[4]
+    transition_matrix = transition_matrix.split("\n")
+    transition_matrix = [[j for j in line.strip().split("\t")] for line in transition_matrix]
+    transition_matrix = {
+    transition_matrix[i + 1][0]: {transition_matrix[0][j]: Decimal(transition_matrix[i + 1][j + 1]) for j in
+                                  range(len(transition_matrix[0]))} for i in
+    range(len(transition_matrix) - 1)}
+    emission_matrix = emission_matrix.split("\n")
+    emission_matrix = [[j for j in line.strip().split("\t")] for line in emission_matrix]
+    emission_matrix = {
+    emission_matrix[i + 1][0]: {emission_matrix[0][j]: Decimal(emission_matrix[i + 1][j + 1]) for j in
+                                range(len(emission_matrix[0]))} for i in
+    range(len(emission_matrix) - 1)}
+    states = [i for i in transition_matrix.keys()]
+    init_pro = Decimal(1 / len(states))
+    forward_dict = {0: {i: emission_matrix[i][emission[0]] * init_pro for i in states}}
+
+    for index in range(1, len(emission)):
+        forward_dict[index] = {}
+        for state in states:
+            pro = sum([ forward_dict[index-1][i]*transition_matrix[i][state]*emission_matrix[state][emission[index]]    for i in states   ])
+            forward_dict[index][state] = pro
+
+    print(sum(forward_dict[index].values()))
+
+
+def print_matrix(entrys,column,matrix:dict):
+    assert type(matrix) is dict
+    assert len(entrys)==len(matrix)
+    assert len(column)==len(matrix[entrys[0]])
+    print("\t",end="")
+    for i in column:
+        print(i,end="\t")
+    print("\n",end="")
+    for entry in entrys:
+        print(entry,end="\t")
+        for i in column:
+            if i==column[-1]:
+                print(matrix[entry][i])
+            else:
+                print(matrix[entry][i],end="\t")
+
+
+
+
+def profile_HMM(data):
+    threshold,states,alignment=decimal.Decimal(data[0]),[i for i in data[1].split()],data[2].split("\n")
+    entry_n=len(alignment)
+    column_n=len(alignment[0])
+    insertion_columns=[]
+    for i in range(len(alignment[0])):
+        insertion_n=len([entry[i] for entry in alignment if entry[i]=="-"])
+        fraction=decimal.Decimal(insertion_n/entry_n)
+        if fraction>=threshold:
+            insertion_columns.append(i)
+            column_n-=1
+    transition_entry=["S","I0"]+[j+str(i) for i in range(1,column_n+1) for j in "MDI"]+["E"]
+    transition_matrix={i:{j:0 for j in transition_entry} for i in transition_entry}
+    emission_matrix={i:{j:0 for j in states} for i in transition_entry}
+
+    #connecting nodes:
+    node_connection={}
+    node_emission={}
+    for entry in alignment:
+        current = 1
+        last_node="S"
+        for index in range(len(entry)):
+            if index in insertion_columns:
+                current-=1
+                if entry[index]=="-":
+                    pass
+                else:
+                    node_connection[last_node] = node_connection.get(last_node, []) + ["I{}".format(str(index + current))]
+                    last_node="I{}".format(str(index + current))
+                    node_emission[last_node]=node_emission.get(last_node,[])+[entry[index]]
+            else:
+                if entry[index]=="-":
+                    node_connection[last_node]=node_connection.get(last_node,[])+["D{}".format(str(index+current))]
+                    last_node="D{}".format(str(index+current))
+                else:
+                    node_connection[last_node] = node_connection.get(last_node, []) + ["M{}".format(str(index + current))]
+                    last_node="M{}".format(str(index + current))
+                    node_emission[last_node] = node_emission.get(last_node, []) + [entry[index]]
+            if index==len(entry)-1:
+                node_connection[last_node]=node_connection.get(last_node,[])+["E"]
+
+    #building up transition matrix:
+    for key in node_connection.keys():
+        for i in node_connection[key]:
+            f=decimal.Decimal(node_connection[key].count(i))/decimal.Decimal(len(node_connection[key]))
+            if f==decimal.Decimal(1):
+                f=round(f,1)
+            transition_matrix[key][i]=f
+
+    print_matrix(transition_entry, transition_entry, transition_matrix)
+    print("--------")
+
+    #building up emission matrix:
+    for key in node_emission.keys():
+        for i in node_emission[key]:
+            f=decimal.Decimal(node_emission[key].count(i))/decimal.Decimal(len(node_emission[key]))
+            if f==decimal.Decimal(1):
+                f=round(f,1)
+            emission_matrix[key][i]=f
+    print_matrix(transition_entry,states,emission_matrix)
+
+
+
+
+def profile_HMM_with_pseudocounts(data):
+    ss, states, alignment = data[0], [i for i in data[1].split()], data[2].split("\n")
+    threshold,pseudocounts=[decimal.Decimal(i) for i in ss.split()]
+    entry_n = len(alignment)
+    column_n = len(alignment[0])
+    insertion_columns = []
+    for i in range(len(alignment[0])):
+        insertion_n = len([entry[i] for entry in alignment if entry[i] == "-"])
+        fraction = decimal.Decimal(insertion_n / entry_n)
+        if fraction >= threshold:
+            insertion_columns.append(i)
+            column_n -= 1
+    transition_entry = ["S", "I0"] + [j + str(i) for i in range(1, column_n + 1) for j in "MDI"] + ["E"]
+    transition_matrix = {i: {j: 0 for j in transition_entry} for i in transition_entry}
+    emission_matrix = {i: {j: 0 for j in states} for i in transition_entry}
+
+    # connecting nodes:
+    node_connection = {}
+    node_emission = {}
+    for entry in alignment:
+        current = 1
+        last_node = "S"
+        for index in range(len(entry)):
+            if index in insertion_columns:
+                current -= 1
+                if entry[index] == "-":
+                    pass
+                else:
+                    node_connection[last_node] = node_connection.get(last_node, []) + [
+                        "I{}".format(str(index + current))]
+                    last_node = "I{}".format(str(index + current))
+                    node_emission[last_node] = node_emission.get(last_node, []) + [entry[index]]
+            else:
+                if entry[index] == "-":
+                    node_connection[last_node] = node_connection.get(last_node, []) + [
+                        "D{}".format(str(index + current))]
+                    last_node = "D{}".format(str(index + current))
+                else:
+                    node_connection[last_node] = node_connection.get(last_node, []) + [
+                        "M{}".format(str(index + current))]
+                    last_node = "M{}".format(str(index + current))
+                    node_emission[last_node] = node_emission.get(last_node, []) + [entry[index]]
+            if index == len(entry) - 1:
+                node_connection[last_node] = node_connection.get(last_node, []) + ["E"]
+
+    # building up transition matrix:
+    for key in node_connection.keys():
+        for i in node_connection[key]:
+            f = decimal.Decimal(node_connection[key].count(i)) / decimal.Decimal(len(node_connection[key]))
+            if f == decimal.Decimal(1):
+                f = round(f, 1)
+            transition_matrix[key][i] = f
+    possible_transition={"S":["I0","M1","D1"],"I0":["D1","I0","M1"]}
+    for i in range(1,column_n):
+        possible_transition["M"+str(i)]=["D"+str(i+1),"I"+str(i),"M"+str(i+1)]
+        possible_transition["I"+str(i)]=["D"+str(i+1),"I"+str(i),"M"+str(i+1)]
+        possible_transition["D"+str(i)]=["D"+str(i+1),"I"+str(i),"M"+str(i+1)]
+    possible_transition["M"+str(column_n)]=possible_transition["I"+str(column_n)]=possible_transition["D"+str(column_n)]=["E","I"+str(column_n)]
+    for key in transition_entry:
+        if key=="E":
+            continue
+        total=sum(transition_matrix[key].values())+pseudocounts*len(possible_transition[key])
+        for tran in transition_entry:
+            if tran in possible_transition[key]:
+                transition_matrix[key][tran]=((transition_matrix[key][tran]+pseudocounts)/total).__round__(3)
+                if str(transition_matrix[key][tran]).endswith("0"):
+                    transition_matrix[key][tran] = decimal.Decimal(str(transition_matrix[key][tran]).rstrip("0"))
+
+    # building up emission matrix:
+    for key in node_emission.keys():
+        for i in node_emission[key]:
+            f = decimal.Decimal(node_emission[key].count(i)) / decimal.Decimal(len(node_emission[key]))
+            if f == decimal.Decimal(1):
+                f = round(f, 1)
+            emission_matrix[key][i] = f
+    for key in emission_matrix.keys():
+        if key.startswith("M") or key.startswith("I"):
+            total=pseudocounts*decimal.Decimal(len(states))+sum(emission_matrix[key].values())
+            for state in states:
+                emission_matrix[key][state]=((emission_matrix[key][state]+pseudocounts)/total).__round__(3)
+                if str(emission_matrix[key][state]).endswith("0") :
+                    emission_matrix[key][state]=decimal.Decimal(str(emission_matrix[key][state]).rstrip("0"))
+
+    return transition_matrix,emission_matrix
+    #print_matrix(transition_entry, transition_entry, transition_matrix)
+    #print("--------")
+    #print_matrix(transition_entry, states, emission_matrix)
+
+
+if __name__=="__main__":
+
+    aaa="""BABABABAABABABBAAAAABABBAAAABBAABAABBBBAAABBBBABAB
+    --------
+    	A	B
+    A	0.743	0.257	
+    B	0.616	0.384""".split('\n--------\n')
+    sting,matrix=aaa
+    probability_of_hidden_path(sting,matrix)
+    
+    bbb="""xzyzzxzzyyzzzxzxyzxzyzxzxzzzxyzzyzzyzzxzyxyxzyyzxz
+    --------
+    x y z
+    --------
+    BAAABABBBABABBAABABBAABBABBABBBABABABABBBAAABBABAB
+    --------
+    A B
+    --------
+    	x	y	z
+    A	0.186	0.248	0.566	
+    B	0.555	0.206	0.239""".split("\n--------\n")
+    
+    pro_of_an_outcome_given_a_hidden_path(bbb)
+    
+    ttt="""xzyyzzyzyy
+    --------
+    x y z
+    --------
+    A B
+    --------
+    	A	B
+    A	0.303	0.697 
+    B	0.831	0.169 
+    --------
+    	x	y	z
+    A	0.533	0.065	0.402 
+    B	0.342	0.334	0.324""".split("\n--------\n")
+    decoding_problem(ttt)
+    
+    
+    ttt="""zzzxzyyxzzzxyzzxyzyyzzxxxxxyyxzxxzxxzzyzzxyyxyxxzzxzyzxzxxyzxyzzzyxxyzxxxyzyzyxzzxxzzzxyyyzyyzyyxyyy
+    --------
+    x y z
+    --------
+    A B C D
+    --------
+    	A	B	C	D
+    A	0.307	0.179	0.342	0.172	
+    B	0.411	0.397	0.037	0.155	
+    C	0.231	0.03	0.375	0.364	
+    D	0.318	0.2	0.185	0.297	
+    --------
+    	x	y	z
+    A	0.144	0.431	0.425	
+    B	0.489	0.128	0.383	
+    C	0.551	0.348	0.101	
+    D	0.156	0.204	0.64""".split("\n--------\n")
+    outcome_likelihood(ttt)
+    
+    ttt="""0.202
+    --------
+    A	B	C	D	E
+    --------
+    BBDDD-DBC
+    A-CDCDBBC
+    A-ED-DB--
+    AB-DCDBBD
+    EBDDDE-DC
+    AB--DD-BC""".split("\n--------\n")
+    decimal.getcontext().prec=3
+    profile_HMM(ttt)'''
+    '''t="""0.282 0.01
+    --------
+    A B C D E
+    --------
+    C-A
+    C-A
+    D-A
+    CA-
+    -AA
+    C-A
+    C-A
+    CAA
+    -AA
+    ---""".split("\n--------\n")
+    profile_HMM_with_pseudocounts(t)
+
+
