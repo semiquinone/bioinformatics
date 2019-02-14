@@ -1,0 +1,117 @@
+import copy
+import math
+
+def compute_distance(m,point1,point2):
+    aa=sum([(point2[i]-point1[i])**2 for i in range(m) ]   )
+    return math.sqrt(aa)
+'''
+aa=[ (2, 6), (4, 9), (5, 7), (6, 5), (8, 3)]
+bb=[ (4, 5), (7, 4)]
+ss=0
+for a in aa:
+    c1,c2=bb
+    dis1=compute_distance(2,a,c1)
+    dis2 = compute_distance(2, a, c2)
+    dis=min(dis1,dis2)
+    if dis>ss:
+        ss=dis
+print(ss)'''
+
+
+def farthest_first_traversal(k,m,data_points):
+    centers=[data_points[0]]
+    while len(centers)<k:
+        h_distance=0; candidate=""
+        for point in data_points:
+            if point in centers:
+                continue
+            distance=min([compute_distance(m,center,point) for center in centers]    )
+            if distance>h_distance:
+                h_distance=distance
+                candidate=point
+        centers.append(candidate)
+    return centers
+
+
+
+def squared_error_distortion_problem(m,inp):
+    inp=inp.split("--------")
+    inp=[i.strip() for i in inp]
+    centers=[[float(i) for i in center.split() ] for center in inp[0].split("\n")  ]
+    points=[[float(i) for i in center.split() ] for center in inp[1].split("\n")  ]
+    sqr_error=0
+    for point in points:
+        c="";l_dis=math.inf
+        for center in centers:
+            dis=compute_distance(m,center,point)
+            if dis<l_dis:
+                l_dis=dis
+                c=center
+        sqr_error+=l_dis**2
+    n=sqr_error/len(points)
+    print(n)
+
+
+
+
+def Lloyd_algorithm(k,m,points):
+    points=points.split("\n")
+    points = [[float(p) for p in point.split()] for point in points]
+    centers=farthest_first_traversal(k,m,points)
+    centers=points[:k]
+    centers=[tuple(i) for i in centers]
+
+    while True:
+        group={i:[] for i in centers}
+        for point in points:
+            l_dis=math.inf;c=None
+            for n in range(k):
+                dis=compute_distance(m,point,centers[n])**2
+                if dis<l_dis:
+                    l_dis=dis
+                    c=centers[n]
+            group[c].append(point)
+        new_centers=[]
+
+        for center in centers:
+            ss=[]
+            n=len(group[center])
+            for index in range(m):
+                summ=sum([group[center][point][index] for point in range(len(group[center]))])
+                ss.append(float("  %0.3f" % (summ/n) ))
+            new_centers.append(tuple(ss))
+        assert len(new_centers)==len(centers)
+        for i in centers:
+            if i not in new_centers:
+                centers=copy.deepcopy(new_centers)
+                break
+        else:
+            for i in new_centers:
+                i=[str(j) for j in i]
+                print(" ".join(i))
+            break
+
+
+if __name__=="__main__":
+		aaa="""""".split("\n")
+		aaa=[[float(p)    for p in point.split()] for point in aaa]
+		farthest_first_traversal(4,2,aaa)
+		
+		ddd="""2.31 4.55
+		5.96 9.08
+		--------
+		3.42 6.03
+		6.23 8.25
+		4.76 1.64
+		4.47 4.33
+		3.95 7.61
+		8.93 2.97
+		9.74 4.03
+		1.73 1.28
+		9.72 5.01
+		7.27 3.77"""
+		squared_error_distortion_problem(4,ddd)
+		
+		
+		aaa=""""""
+		Lloyd_algorithm(7,4,aaa)
