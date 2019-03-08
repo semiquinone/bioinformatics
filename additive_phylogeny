@@ -1,0 +1,202 @@
+from math import inf
+import copy
+
+
+
+def distance_between_leaves(n,graph):
+    """
+    stem_dic: the stem of that node
+    leave_dic: the leaves of that stem
+    """
+    leave_dic={};stem_dic={};edge_dic={}
+    root=n
+    for i in graph:
+        edge=i.split("->")
+        edge=[edge[0]]+edge[1].split(":")
+        edge=[int(j) for j in edge]
+        if edge[1]>n-1 and edge[0]<n-1:
+            stem_dic[edge[0]]=edge[1]
+        elif edge[1]>n-1 and edge[0]>n-1:
+            stem_dic[edge[0]]=stem_dic.get(edge[0],[])+[edge[1]]
+        else:
+            leave_dic[edge[0]]=leave_dic.get(edge[0],[])+[edge[1]]
+        edge_dic[(edge[0],edge[1])]=edge[2]
+    root_dic={}
+    root_stem_dic={}
+    for leave in leave_dic[root]:
+        root_dic[leave]=[root]
+    root_stem_dic[root]=[]
+    been={root}
+    stems=set(stem_dic[root])-been
+    for i in stems:
+        root_stem_dic[i]=[root]
+    been.update(stems)
+    while len(root_dic)!=n:
+        next_stems=set()
+        for i in stems:
+            for leave in leave_dic[i]:
+                root_dic[leave]=[i]+root_stem_dic[i]
+            stem_leaves=set(stem_dic[i])-been
+            root_stem_dic.update(root_stem_dic.fromkeys(stem_leaves,[i]+root_stem_dic[i]))
+            next_stems.update(set(stem_dic[i])-been)
+            been.add(i)
+        stems=next_stems.copy()
+    matrix=[[0 for i in range(n)] for j in range(n)]
+    print(root_dic)
+    for i in range(n):
+        for j in range(i+1,n):
+            common_ancester=None
+            for ancester in root_dic[i]:
+                if ancester in root_dic[j]:
+                    common_ancester=ancester
+                    break
+            index1=root_dic[i].index(common_ancester);index2=root_dic[j].index(common_ancester)
+            dis1=edge_dic[(i,root_dic[i][0])];dis2=edge_dic[(j,root_dic[j][0])]
+            for k in range(1,index1+1):
+                dis1+=edge_dic[(root_dic[i][k-1],root_dic[i][k])]
+            for k in range(1,index2+1):
+                dis1+=edge_dic[(root_dic[j][k-1],root_dic[j][k])]
+            matrix[i][j]=matrix[j][i]=dis1+dis2
+    for i in matrix:
+        print(" ".join([str(a) for a in i]))
+    return
+
+
+def limb_length_problem(j,matrix):
+    limb_length=inf
+    mini=min(matrix.keys())
+    start=mini if mini!=j else max(matrix.keys())
+    for a in matrix.keys():
+        if a==start or a==j:
+            continue
+        distance=int((matrix[a][j]+matrix[start][j]-matrix[a][start])/2)
+        if distance<limb_length:
+            limb_length=distance
+    return  limb_length
+
+
+
+
+
+adjacency_map={}
+def additive_phylogeny(matrix):
+    parent_node={}
+    n=len(matrix)
+    if n==1:
+        return
+    if n==2:
+        a,b =matrix.keys()
+        parent_node[a]=[b,matrix[a][b]]
+        return
+    increment=max(matrix.keys())+1
+    for leave in matrix.keys():
+        limb_length=limb_length_problem(leave,matrix)
+        if limb_length==0:
+            parent_node[leave]=[leave,0]
+            continue
+        for entry in parent_node.keys():
+            if parent_node[entry][1]+limb_length==matrix[entry][leave]:
+                parent_node[leave]=[parent_node[entry][0],limb_length]
+                break
+        else:
+            parent_node[leave]=[increment,limb_length]
+            increment+=1
+    adjacency_map.update(parent_node)
+    parent_to_leaf={}
+    for i in parent_node.keys():
+        parent_to_leaf[parent_node[i][0]]=i
+    parents=set(i[0] for i in  parent_node.values())
+    parent_matrix={}
+    for parent in parents:
+        parent_matrix[parent]={}
+        for other in parents:
+            if parent==other:
+                parent_matrix[parent][parent]=0
+            else:
+                edge=matrix[parent_to_leaf[parent]][parent_to_leaf[other]]-parent_node[parent_to_leaf[parent]][1]-parent_node[parent_to_leaf[other]][1]
+                parent_matrix[parent][other]=edge
+
+    pesudo_matrix=copy.deepcopy(parent_matrix)
+    for parent in parent_matrix.keys():
+        while len(pesudo_matrix[parent])>1 :
+            min_distance=inf
+            min_node=None
+            for dis in pesudo_matrix[parent].keys():
+                if dis==parent:
+                    continue
+                if parent_matrix[parent][dis]<min_distance:
+                    min_distance=parent_matrix[parent][dis]
+                    min_node=dis
+            print('{}->{}:{}'.format(parent, min_node, min_distance))
+            pesudo=pesudo_matrix[parent].copy()
+            for node in parent_matrix[parent].keys():
+                if parent_matrix[parent][node]==parent_matrix[parent][min_node]+parent_matrix[min_node][node]:
+                    pesudo.pop(node)
+            pesudo_matrix[parent]=pesudo.copy()
+
+
+if __name__=="__main__":
+		qq="""0->4:11
+		1->4:2
+		2->5:6
+		3->5:7
+		4->0:11
+		4->1:2
+		4->5:4
+		5->4:4
+		5->3:7
+		5->2:6""".split()
+		distance_between_leaves(4,qq)
+
+		aaa="""0	13	21	22
+		13	0	12	13
+		21	12	0	13
+		22	13	13	0""".split("\n")
+		aaa=[[int(j) for j in i.split()] for i in aaa]
+		limb_length_problem(4,1,aaa)
+
+
+    aaa="""0 9318 6783 6417 11226 3538 660 7880 2941 12997 10097 7295 12643 11955 8995 4031 12975 11693 1829 10273 5083
+    9318 0 3147 4273 2310 6710 9114 2096 8027 4081 1181 2787 3727 3039 1629 5531 4059 2777 8907 1357 4617
+    6783 3147 0 1738 5055 4175 6579 1709 5492 6826 3926 1124 6472 5784 2824 2996 6804 5522 6372 4102 2082
+    6417 4273 1738 0 6181 3809 6213 2835 5126 7952 5052 2250 7598 6910 3950 2630 7930 6648 6006 5228 1716
+    11226 2310 5055 6181 0 8618 11022 4004 9935 3001 2953 4695 2647 1959 3537 7439 2979 1697 10815 1501 6525
+    3538 6710 4175 3809 8618 0 3334 5272 2247 10389 7489 4687 10035 9347 6387 1423 10367 9085 3127 7665 2475
+    660 9114 6579 6213 11022 3334 0 7676 2737 12793 9893 7091 12439 11751 8791 3827 12771 11489 1625 10069 4879
+    7880 2096 1709 2835 4004 5272 7676 0 6589 5775 2875 1349 5421 4733 1773 4093 5753 4471 7469 3051 3179
+    2941 8027 5492 5126 9935 2247 2737 6589 0 11706 8806 6004 11352 10664 7704 2740 11684 10402 2530 8982 3792
+    12997 4081 6826 7952 3001 10389 12793 5775 11706 0 4724 6466 562 1402 5308 9210 614 2360 12586 3272 8296
+    10097 1181 3926 5052 2953 7489 9893 2875 8806 4724 0 3566 4370 3682 2408 6310 4702 3420 9686 2000 5396
+    7295 2787 1124 2250 4695 4687 7091 1349 6004 6466 3566 0 6112 5424 2464 3508 6444 5162 6884 3742 2594
+    12643 3727 6472 7598 2647 10035 12439 5421 11352 562 4370 6112 0 1048 4954 8856 540 2006 12232 2918 7942
+    11955 3039 5784 6910 1959 9347 11751 4733 10664 1402 3682 5424 1048 0 4266 8168 1380 1318 11544 2230 7254
+    8995 1629 2824 3950 3537 6387 8791 1773 7704 5308 2408 2464 4954 4266 0 5208 5286 4004 8584 2584 4294
+    4031 5531 2996 2630 7439 1423 3827 4093 2740 9210 6310 3508 8856 8168 5208 0 9188 7906 3620 6486 1296
+    12975 4059 6804 7930 2979 10367 12771 5753 11684 614 4702 6444 540 1380 5286 9188 0 2338 12564 3250 8274
+    11693 2777 5522 6648 1697 9085 11489 4471 10402 2360 3420 5162 2006 1318 4004 7906 2338 0 11282 1968 6992
+    1829 8907 6372 6006 10815 3127 1625 7469 2530 12586 9686 6884 12232 11544 8584 3620 12564 11282 0 9862 4672
+    10273 1357 4102 5228 1501 7665 10069 3051 8982 3272 2000 3742 2918 2230 2584 6486 3250 1968 9862 0 5572
+    5083 4617 2082 1716 6525 2475 4879 3179 3792 8296 5396 2594 7942 7254 4294 1296 8274 6992 4672 5572 0""".split("\n")
+    aaa=[[int(j) for j in i.split()] for i in aaa]
+    aaa={i:k for i,k in enumerate(aaa)}
+    for line in aaa.keys():
+        aaa[line]={i:j for i,j in enumerate(aaa[line])}
+    
+    #print(limb_length_problem(2,aaa))
+    #print(aaa)
+    
+    additive_phylogeny(aaa)
+    print("\n\n\n")
+    for i in adjacency_map.keys():
+        if adjacency_map[i][1]!=0:
+            print('{}->{}:{}'.format(i,adjacency_map[i][0],adjacency_map[i][1]))
+            print('{}->{}:{}'.format(adjacency_map[i][0], i, adjacency_map[i][1]))
+
+
+
+
+
+
+
+
+
