@@ -1,0 +1,123 @@
+from math import inf
+import numpy as np
+
+def changeproblem(change,coins):
+    changedic={}
+    changedic[0]=0
+    for i in range(1,change+1):
+        minimalcoin=inf
+        for j in coins:
+            if i>=j:
+                if changedic[i-j]+1<minimalcoin:
+                    minimalcoin=changedic[i-j]+1
+        changedic[i]=minimalcoin
+    return changedic[change]
+
+
+def Manhattan_Tourist_Problem(n,m,matrix):
+    down_matrix=matrix[0]
+    down_matrix=down_matrix.strip().split("\n")
+    down_matrix=[ [int(j) for j in i.split()]  for i in down_matrix   ]
+    right_matrix=matrix[1]
+    right_matrix=right_matrix.strip().split("\n")
+    right_matrix=[ [int(j) for j in i.split()]  for i in right_matrix]
+    walking_matrix=[[0 for i in range(m+1)] for j in range(n+1)]
+    walking_matrix[0][0]=0
+    for i in range(1,n+1):
+        walking_matrix[i][0]=walking_matrix[i-1][0]+down_matrix[i-1][0]
+    for i in range(1,m+1):
+        walking_matrix[0][i]=walking_matrix[0][i-1]+right_matrix[0][i-1]
+    for i in range(1,n+1):
+        for j in range(1,m+1):
+            walking_matrix[i][j]=max(walking_matrix[i-1][j]+down_matrix[i-1][j],walking_matrix[i][j-1]+right_matrix[i][j-1])
+    print(walking_matrix)
+    return walking_matrix
+
+
+def alignment_dna_matrix(dna1,dna2):
+    row=len(dna1)+1
+    column=len(dna2)+1
+    matrix=[[0 for i in range(column)] for j in range(row)]
+    matchpoint=[[0 for i in range(len(dna2))] for j in range(len(dna1))]
+    for i in range(1,row):
+        for j in range(1,column):
+            match=1 if dna1[i-1]==dna2[j-1] else 0
+            if match:
+                matchpoint[i-1][j-1]=1
+            matrix[i][j]=max(matrix[i-1][j-1]+match,matrix[i-1][j],matrix[i][j-1])
+    return matrix,matchpoint
+
+
+def back_track_by_matrix(dna1,dna2):
+    matrix,matchpoint =alignment_dna_matrix(dna1,dna2)
+    trace=[]
+    i=len(dna1)
+    j=len(dna2)
+    common_string=""
+    while i!=0 or j!=0:
+        if matrix[i][j]== matrix[i-1][j-1]+1 and matchpoint[i-1][j-1]:
+            trace.append("match")
+            i-=1
+            j-=1
+            common_string=dna1[i]+common_string
+        elif matrix[i][j]==matrix[i-1][j]:
+            trace.append("down")
+            i-=1
+        else:
+            trace.append("right")
+            j-=1
+    print(common_string)
+    return trace
+
+
+def longest_path_in_DAG(start,end,graph):
+    graph=graph.strip().split()
+    edge_dic={}
+    for entry in graph:
+        edge,number=entry.split(":")
+        thein,theout=edge.split("->")
+        #if int(thein)>=int(start) and int(thein)<int(end):
+            #edge_dic[(thein,theout)]=int(number)
+        edge_dic[(thein, theout)] = int(number)
+    print(edge_dic)
+    predessor_dic={}
+    ins=[]
+    outs=[]
+    for out_edge,in_edge in edge_dic.keys():
+        ins.append(in_edge)
+        outs.append(out_edge)
+    waste=[]
+    for i in outs:
+        if i not in ins and i!=start:
+            waste.append(i)
+    for k, v in edge_dic.keys():
+        if k in waste:
+            edge_dic[(k,v)]=-inf
+    waste=list(set(waste))
+
+    print(waste)
+    for i, j in edge_dic.keys():
+        predessor_dic[j] = predessor_dic.get(j, []) + [i]
+    length_dic = {i:0 for i in waste}
+    length_dic[start]=0
+    print(predessor_dic)
+    predessor_dic_copy1= predessor_dic.copy()
+    predessor_dic_copy2=predessor_dic.copy()
+    while predessor_dic_copy1:
+        for k,v in predessor_dic_copy2.items():
+            if all([i in length_dic for i in v]):
+                length_dic[k]=max([length_dic[i]+edge_dic[(i,k)] for i in v]+[0])
+                predessor_dic_copy1.pop(k)
+        predessor_dic_copy2=predessor_dic_copy1.copy()
+    print(length_dic)
+    print(length_dic[end])
+    i=end
+    path=end
+    while i!=start:
+        for j in predessor_dic[i]:
+            if (j,i) in edge_dic and length_dic[i]==edge_dic[(j,i)]+length_dic[j]:
+                path=j+"->"+path
+                i=j
+                break
+    print(path)
+
