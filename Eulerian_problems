@@ -1,0 +1,175 @@
+import random
+
+def DeBruijn_Graph_from_kmers(dna_set):
+    dna_set=[dna.strip() for dna in dna_set]
+    dic={}
+    for dna in dna_set:
+        ori=dic.get(dna[:-1],[])
+        ori.append(dna[1:])
+        dic[dna[:-1]]=ori
+    result=""
+    for k ,v in dic.items():
+        result+="{}->{}\n".format(k,",".join(v))
+    result=result[:-1]
+    return result
+
+def  EulerianCycle(graph):
+    circle=[]
+    location=random.choice(list(graph.keys()))
+    stack=[]
+    while any(list(graph.values())):
+        while graph[location]==[]:
+            stack.append(location)
+            location=circle.pop()
+        choice=random.choice(graph[location])
+        graph[location].remove(choice)
+        circle.append(location)
+        location=choice
+    stack.append(location)
+    while circle:
+        stack.append(circle.pop())
+    stack.reverse()
+    return stack
+
+def from_path_to_circle(Graph):
+    gg = Graph.split("\n")
+    graph = {}
+    for i in gg:
+        i.strip()
+        entry = i.split("->")
+        graph[entry[0].strip()] = entry[1].split(",")
+    all_nodes=set()
+    values = graph.values()
+    for i in values:
+        for j in i:
+            all_nodes.add(j)
+    for i in graph.keys():
+        all_nodes.add(i)
+    in_dic=dict.fromkeys(all_nodes,0)
+    out_dic=dict.fromkeys(all_nodes,0)
+    for i in values:
+        for j in i:
+            in_dic[j]+=1
+    for i in graph.keys():
+        out_dic[i]+=len(graph[i])
+    only_in,only_out=None,None
+    for i in all_nodes:
+        if out_dic[i]-in_dic[i]==-1:
+            only_in=i
+        if out_dic[i]-in_dic[i]==1:
+            only_out=i
+    if only_out and only_in:
+        i=graph.get(only_in,[])
+        i.append(only_out)
+        graph[only_in]=i
+    result=EulerianCycle(graph)
+    if only_in and only_out:
+        index = result.index(only_out)
+        if not (index==0 and result[-1]==only_in):
+            while result[index-1]!= only_in:
+                index=result.index(only_out,index+1)
+        path=result[index:]+result[1:index]
+    else:
+        path=result
+    return "->".join(path)
+
+def assembly(path):
+    l=path.split("->")
+    dna=""
+    for i in l[:-1]:
+        dna+=i[0]
+    dna+=l[-1]
+    return dna
+
+
+def k_Universal_Circular_String(k):
+    def kmer_generator(k):
+        binary="01"
+        if k==1:
+            return list(binary)
+        lis=[]
+        for i in binary:
+            for j in kmer_generator(k-1):
+                lis.append(j+i)
+        return lis
+    kmers=kmer_generator(k)
+    strings=DeBruijn_Graph_from_kmers(kmers)
+    path=from_path_to_circle(strings)
+    print(assembly(path)[:-(k-1)])
+
+
+
+def construction_from_read_pairs(k,d,reads):
+    entry=reads.split("\n")
+    read_pairs=[i.strip().split("|") for i in entry]
+    graph={}
+    for read_pair in read_pairs:
+        prefix="{}|{}".format(read_pair[0][:k-1],read_pair[1][:k-1])
+        sufix="{}|{}".format(read_pair[0][-k+1:],read_pair[1][-k+1:])
+        i=graph.get(prefix,[])
+        i.append(sufix)
+        graph[prefix]=i
+    all_nodes = set()
+    values = graph.values()
+    for i in values:
+        for j in i:
+            all_nodes.add(j)
+    for i in graph.keys():
+        all_nodes.add(i)
+    in_dic = dict.fromkeys(all_nodes, 0)
+    out_dic = dict.fromkeys(all_nodes, 0)
+    for i in values:
+        for j in i:
+            in_dic[j] += 1
+    for i in graph.keys():
+        out_dic[i] += len(graph[i])
+    only_in, only_out = None, None
+    for i in all_nodes:
+        if out_dic[i] - in_dic[i] == -1:
+            only_in = i
+        if out_dic[i] - in_dic[i] == 1:
+            only_out = i
+    if only_out and only_in:
+        i = graph.get(only_in, [])
+        i.append(only_out)
+        graph[only_in] = i
+    circle = []
+    location = random.choice(list(graph.keys()))
+    stack = []
+    while any(list(graph.values())):
+        while graph[location] == []:
+            stack.append(location)
+            location = circle.pop()
+        choice = random.choice(graph[location])
+        graph[location].remove(choice)
+        circle.append(location)
+        location = choice
+    stack.append(location)
+    while circle:
+        stack.append(circle.pop())
+    stack.reverse()
+    result=stack
+    index = result.index(only_out)
+    if not (index == 0 and result[-1] == only_in):
+        while result[index - 1] != only_in:
+            index = result.index(only_out, index + 1)
+        result=result[index:]+result[1:index]
+    print(result)
+    path_list=[i[0] for i in result[:-1]]
+    path_list.append(result[-1][:k-1])
+    path_list.extend([ i[-1] for i in result[-d-k:]  ])
+    print("".join(path_list))
+
+
+if __name__=="__main__":
+    tt="""GAGA|TTGA
+    TCGT|GATG
+    CGTG|ATGT
+    TGGT|TGAG
+    GTGA|TGTT
+    GTGG|GTGA
+    TGAG|GTTG
+    GGTC|GAGA
+    GTCG|AGAT"""
+    
+    construction_from_read_pairs(4,2,tt)
