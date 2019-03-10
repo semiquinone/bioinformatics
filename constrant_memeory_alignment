@@ -1,0 +1,207 @@
+from  math import inf
+blosum62={'A': {'A': 4, 'C': 0, 'E': -1, 'D': -2, 'G': 0, 'F': -2, 'I': -1, 'H': -2, 'K': -1, 'M': -1, 'L': -1, 'N': -2, 'Q': -1, 'P': -1, 'S': 1, 'R': -1, 'T': 0, 'W': -3, 'V': 0, 'Y': -2}, 'C': {'A': 0, 'C': 9, 'E': -4, 'D': -3, 'G': -3, 'F': -2, 'I': -1, 'H': -3, 'K': -3, 'M': -1, 'L': -1, 'N': -3, 'Q': -3, 'P': -3, 'S': -1, 'R': -3, 'T': -1, 'W': -2, 'V': -1, 'Y': -2}, 'E': {'A': -1, 'C': -4, 'E': 5, 'D': 2, 'G': -2, 'F': -3, 'I': -3, 'H': 0, 'K': 1, 'M': -2, 'L': -3, 'N': 0, 'Q': 2, 'P': -1, 'S': 0, 'R': 0, 'T': -1, 'W': -3, 'V': -2, 'Y': -2}, 'D': {'A': -2, 'C': -3, 'E': 2, 'D': 6, 'G': -1, 'F': -3, 'I': -3, 'H': -1, 'K': -1, 'M': -3, 'L': -4, 'N': 1, 'Q': 0, 'P': -1, 'S': 0, 'R': -2, 'T': -1, 'W': -4, 'V': -3, 'Y': -3}, 'G': {'A': 0, 'C': -3, 'E': -2, 'D': -1, 'G': 6, 'F': -3, 'I': -4, 'H': -2, 'K': -2, 'M': -3, 'L': -4, 'N': 0, 'Q': -2, 'P': -2, 'S': 0, 'R': -2, 'T': -2, 'W': -2, 'V': -3, 'Y': -3}, 'F': {'A': -2, 'C': -2, 'E': -3, 'D': -3, 'G': -3, 'F': 6, 'I': 0, 'H': -1, 'K': -3, 'M': 0, 'L': 0, 'N': -3, 'Q': -3, 'P': -4, 'S': -2, 'R': -3, 'T': -2, 'W': 1, 'V': -1, 'Y': 3}, 'I': {'A': -1, 'C': -1, 'E': -3, 'D': -3, 'G': -4, 'F': 0, 'I': 4, 'H': -3, 'K': -3, 'M': 1, 'L': 2, 'N': -3, 'Q': -3, 'P': -3, 'S': -2, 'R': -3, 'T': -1, 'W': -3, 'V': 3, 'Y': -1}, 'H': {'A': -2, 'C': -3, 'E': 0, 'D': -1, 'G': -2, 'F': -1, 'I': -3, 'H': 8, 'K': -1, 'M': -2, 'L': -3, 'N': 1, 'Q': 0, 'P': -2, 'S': -1, 'R': 0, 'T': -2, 'W': -2, 'V': -3, 'Y': 2}, 'K': {'A': -1, 'C': -3, 'E': 1, 'D': -1, 'G': -2, 'F': -3, 'I': -3, 'H': -1, 'K': 5, 'M': -1, 'L': -2, 'N': 0, 'Q': 1, 'P': -1, 'S': 0, 'R': 2, 'T': -1, 'W': -3, 'V': -2, 'Y': -2}, 'M': {'A': -1, 'C': -1, 'E': -2, 'D': -3, 'G': -3, 'F': 0, 'I': 1, 'H': -2, 'K': -1, 'M': 5, 'L': 2, 'N': -2, 'Q': 0, 'P': -2, 'S': -1, 'R': -1, 'T': -1, 'W': -1, 'V': 1, 'Y': -1}, 'L': {'A': -1, 'C': -1, 'E': -3, 'D': -4, 'G': -4, 'F': 0, 'I': 2, 'H': -3, 'K': -2, 'M': 2, 'L': 4, 'N': -3, 'Q': -2, 'P': -3, 'S': -2, 'R': -2, 'T': -1, 'W': -2, 'V': 1, 'Y': -1}, 'N': {'A': -2, 'C': -3, 'E': 0, 'D': 1, 'G': 0, 'F': -3, 'I': -3, 'H': 1, 'K': 0, 'M': -2, 'L': -3, 'N': 6, 'Q': 0, 'P': -2, 'S': 1, 'R': 0, 'T': 0, 'W': -4, 'V': -3, 'Y': -2}, 'Q': {'A': -1, 'C': -3, 'E': 2, 'D': 0, 'G': -2, 'F': -3, 'I': -3, 'H': 0, 'K': 1, 'M': 0, 'L': -2, 'N': 0, 'Q': 5, 'P': -1, 'S': 0, 'R': 1, 'T': -1, 'W': -2, 'V': -2, 'Y': -1}, 'P': {'A': -1, 'C': -3, 'E': -1, 'D': -1, 'G': -2, 'F': -4, 'I': -3, 'H': -2, 'K': -1, 'M': -2, 'L': -3, 'N': -2, 'Q': -1, 'P': 7, 'S': -1, 'R': -2, 'T': -1, 'W': -4, 'V': -2, 'Y': -3}, 'S': {'A': 1, 'C': -1, 'E': 0, 'D': 0, 'G': 0, 'F': -2, 'I': -2, 'H': -1, 'K': 0, 'M': -1, 'L': -2, 'N': 1, 'Q': 0, 'P': -1, 'S': 4, 'R': -1, 'T': 1, 'W': -3, 'V': -2, 'Y': -2}, 'R': {'A': -1, 'C': -3, 'E': 0, 'D': -2, 'G': -2, 'F': -3, 'I': -3, 'H': 0, 'K': 2, 'M': -1, 'L': -2, 'N': 0, 'Q': 1, 'P': -2, 'S': -1, 'R': 5, 'T': -1, 'W': -3, 'V': -3, 'Y': -2}, 'T': {'A': 0, 'C': -1, 'E': -1, 'D': -1, 'G': -2, 'F': -2, 'I': -1, 'H': -2, 'K': -1, 'M': -1, 'L': -1, 'N': 0, 'Q': -1, 'P': -1, 'S': 1, 'R': -1, 'T': 5, 'W': -2, 'V': 0, 'Y': -2}, 'W': {'A': -3, 'C': -2, 'E': -3, 'D': -4, 'G': -2, 'F': 1, 'I': -3, 'H': -2, 'K': -3, 'M': -1, 'L': -2, 'N': -4, 'Q': -2, 'P': -4, 'S': -3, 'R': -3, 'T': -2, 'W': 11, 'V': -3, 'Y': 2}, 'V': {'A': 0, 'C': -1, 'E': -2, 'D': -3, 'G': -3, 'F': -1, 'I': 3, 'H': -3, 'K': -2, 'M': 1, 'L': 1, 'N': -3, 'Q': -2, 'P': -2, 'S': -2, 'R': -3, 'T': 0, 'W': -3, 'V': 4, 'Y': -1}, 'Y': {'A': -2, 'C': -2, 'E': -2, 'D': -3, 'G': -3, 'F': 3, 'I': -1, 'H': 2, 'K': -2, 'M': -1, 'L': -1, 'N': -2, 'Q': -1, 'P': -3, 'S': -2, 'R': -2, 'T': -2, 'W': 2, 'V': -1, 'Y': 7}}
+#print(blosum62["A"]["A"])
+
+def alignment_with_affine_gap_penalty(seq1,seq2,scoring_matrix=blosum62):
+    gap_open=-11
+    gap_extention=-1
+    row = len(seq1) + 1
+    column = len(seq2) + 1
+    lower=[[0 for i in range(column)] for j in range(row)]
+    lower[0][1:]=[-inf for i in range(column-1)]
+    upper = [[0 for i in range(column)] for j in range(row)]
+    upper[0][1:]=[gap_open+gap_extention*(i-1) for i in range(1,column)]
+    middle = [[0 for i in range(column)] for j in range(row)]
+    for i in range(1,row):
+        middle[i][0]=lower[i][0]=gap_open+gap_extention*(i-1)
+        upper[i][0]=-inf
+    middle[0][1:]=[gap_open+gap_extention*(i-1) for i in range(1,column)]
+    for i in range(1,row):
+        for j in range(1,column):
+            lower[i][j]=max(lower[i-1][j]+gap_extention,middle[i-1][j]+gap_open)
+            upper[i][j]=max(upper[i][j-1]+gap_extention,middle[i][j-1]+gap_open)
+            middle[i][j]=max(lower[i][j],upper[i][j],middle[i-1][j-1]+scoring_matrix[seq1[i-1]][seq2[j-1]])
+    print(middle[-1][-1])
+    align1=align2=""
+
+    i = row - 1
+    j = column - 1
+    matrix=middle
+    while i!=0 or j!=0:
+        if matrix==middle:
+            if middle[i][j] == middle[i - 1][j - 1] + blosum62[seq1[i - 1]][seq2[j - 1]]:
+                j -= 1
+                i -= 1
+                align1 = seq1[i] + align1
+                align2 = seq2[j] + align2
+            elif middle[i][j] == lower[i][j]:
+                matrix=lower
+            else:
+                matrix=upper
+        elif matrix==lower:
+            if matrix[i][j]==matrix[i - 1][j] + gap_extention:
+                i -= 1
+                align1 = seq1[i] + align1
+                align2 = "-" + align2
+            if matrix[i][j] == middle[i - 1][j] + gap_open:
+                i -= 1
+                align1 = seq1[i] + align1
+                align2 = "-" + align2
+                matrix=middle
+        elif matrix==upper:
+            if matrix[i][j]==matrix[i][j-1]+gap_extention:
+                j -= 1
+                align1 = "-" + align1
+                align2 = seq2[j] + align2
+            if matrix[i][j]==middle[i][j-1]+gap_open:
+                j -= 1
+                align1 = "-" + align1
+                align2 = seq2[j] + align2
+                matrix=middle
+    print(align1,align2,sep="\n")
+
+
+
+def from_source_to_sink(seq1,seq2,scoring_matrix=blosum62,indel_penalty=-5):
+    row = len(seq1) + 1
+    column = len(seq2) + 1
+    middle = len(seq2)-1
+    j = 0
+    matrix_column = [i * -5 for i in range(row)]
+    while j!=middle:
+        j+=1
+        next_column=[matrix_column[0]+indel_penalty]
+        for i in range(1,row):
+            next_column.append(max(matrix_column[i]+indel_penalty,next_column[i-1]+indel_penalty,matrix_column[i-1]+scoring_matrix[seq1[i-1]][seq2[j-1]]))
+        matrix_column=next_column[:]
+    next_column=[matrix_column[0]+indel_penalty]
+    for i in range(1, row):
+        next_column.append(max(matrix_column[i] +indel_penalty, next_column[i - 1] +indel_penalty,
+                               matrix_column[i - 1] + scoring_matrix[seq1[i - 1]][seq2[middle]]))
+    return matrix_column,next_column
+
+def middle_node_and_edge(seq1,seq2,scoring_matrix=blosum62,indel_penalty=-5):
+    middle=int(len(seq2)//2)
+    middle_one,middle_next=from_source_to_sink(seq1,seq2[:middle+1])
+    sinkmiddle,sinkmiddlenext=from_source_to_sink(seq1[::-1],seq2[middle:][::-1])
+    sinkmiddlenext.reverse()
+    sinkmiddle.reverse()
+    middle_column=[x+y for x,y in zip(middle_one,sinkmiddlenext)]
+    middle_next_column=[x+y for x,y in zip(middle_next,sinkmiddle)]
+    maxi=max(middle_column)
+    if len(seq1)==down1 and len(seq2)==right1:
+        print(maxi)
+    middle_next_node=middle_next_column.index(maxi)
+    if middle_next_node==0:
+        middle_node=0
+        edge="R"
+        return (middle_node,middle),(middle_next_node,middle+1),edge
+    if middle_column[middle_next_node - 1] == maxi:
+        edge = "M"
+        middle_node = middle_next_node - 1
+    elif middle_column[middle_next_node]==maxi:
+        edge="R"
+        middle_node=middle_next_node
+    else:
+        print("something wrong")
+    #print(middle_node,middle)
+    #print(middle_next_node,middle+1,end="\n\n\n")
+    return (middle_node,middle),(middle_next_node,middle+1),edge
+
+def linear_space_alignment(seq1,seq2,top,down,left,right):
+    print(top,down,left,right)
+    if top==down:
+        return "R"*(right-left)
+    if left==right:
+        return "D"*(down-top)
+    middle_node,middle_next_node,middle_edge=middle_node_and_edge(seq1[top:down],seq2[left:right])
+    middle_row,middle_column=middle_node
+    next_row,next_column=middle_next_node
+    left_part=linear_space_alignment(seq1,seq2,top,top+middle_row,left,left+middle_column)
+    right_part=linear_space_alignment(seq1,seq2,top+next_row,down,left+next_column,right)
+    path=left_part+middle_edge+right_part
+    if top==left==0 and down==down1 and right==right1:
+        print(path)
+        seq1=[i for i in seq1[::-1]]
+        seq2 = [i for i in seq2[::-1]]
+        align1=""
+        align2=""
+        for i in path:
+            if i =="D":
+                align1+=seq1.pop()
+                align2+="-"
+            elif i=="M":
+                align1+=seq1.pop()
+                align2+=seq2.pop()
+            elif i=="R":
+                align1+="-"
+                align2+=seq2.pop()
+        print(align1,align2,sep="\n")
+    return path
+
+
+
+def multiple_longest_common_subsequence_problem(seq1,seq2,seq3):
+    row=len(seq1)+1
+    column=len(seq2)+1
+    depth=len(seq3)+1
+    d3_matrix={(i,j):[0 for k in range(depth)]  for i in range(row) for j in range(column) }
+    for i in range(1,row):
+        for j in range(1,column):
+            for k in range(1,depth):
+                match=1 if seq1[i-1]==seq2[j-1]==seq3[k-1] else 0
+                d3_matrix[(i,j)][k]=max([ d3_matrix[(i-1,j)][k],
+                                          d3_matrix[(i , j- 1)][k],
+                                          d3_matrix[(i , j)][k- 1],
+                                          d3_matrix[(i - 1, j- 1)][k],
+                                          d3_matrix[(i - 1, j)][k- 1],
+                                          d3_matrix[(i, j - 1)][k - 1],
+                                          d3_matrix[(i - 1, j- 1)][k- 1]+match])
+    score=d3_matrix[(row-1,column-1)][depth-1]
+    print(score)
+    align1=align2=align3=""
+    seq1=[i for i in seq1];seq2=[i for i in seq2];seq3=[i for i in seq3]
+    i=row-1;j=column-1;k=depth-1
+    while i!=0 or j!=0 or k!=0:
+        print(i,j,k)
+        if seq1[i-1]==seq2[j-1]==seq3[k-1] and d3_matrix[(i,j)][k]==d3_matrix[(i-1,j-1)][k-1]+1 :
+            align1=seq1.pop()+align1;i-=1
+            align2=seq2.pop()+align2;j-=1
+            align3=seq3.pop()+align3;k-=1
+        elif d3_matrix[(i,j)][k]==d3_matrix[(i-1,j)][k]:
+            align1 = seq1.pop() + align1;i-=1
+            align2 = "-" + align2
+            align3 = "-" + align3
+        elif d3_matrix[(i,j)][k]==d3_matrix[(i , j- 1)][k]:
+            align1 = "-" + align1
+            align2 = seq2.pop() + align2;j -= 1
+            align3 = "-" + align3
+        elif d3_matrix[(i,j)][k]==d3_matrix[(i , j)][k- 1]:
+            align1 = "-" + align1
+            align2 = "-" + align2
+            align3 = seq3.pop() + align3;k -= 1
+        elif d3_matrix[(i,j)][k]==d3_matrix[(i - 1, j- 1)][k]:
+            align1 = seq1.pop() + align1;i -= 1
+            align2 = seq2.pop() + align2;j -= 1
+            align3 = "-" + align3
+        elif d3_matrix[(i,j)][k]==d3_matrix[(i - 1,j)][k-1]:
+            align1 = seq1.pop() + align1;i -= 1
+            align2 = "-" + align2
+            align3 = seq3.pop() + align3;k -= 1
+        elif d3_matrix[(i,j)][k]==d3_matrix[(i, j - 1)][k - 1]:
+            align1 = "-" + align1
+            align2 = seq2.pop() + align2;j -= 1
+            align3 = seq3.pop() + align3;k -= 1
+        print(align1,align2,align3,sep="\n")
+
+if __name__=="__main__":
+		t1="S"
+		down1=len(t1)
+		t2="S"
+		right1=len(t2)
+		#linear_space_alignment(t1,t2,0,down1,0,right1)
+  
+		t1="TCTAGCGAAC"
+		t2="ATTACCGATC"
+		t3="TTCACTGACG"
+		multiple_longest_common_subsequence_problem(t1,t2,t3)
