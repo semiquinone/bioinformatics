@@ -1,0 +1,120 @@
+translation={"TTT":"F","TTC":"F", "TTA":"L","TTG":"L","CTT":"L","CTC":"L","CTA":"L","CTG":"L",
+             "ATT":"I","ATC":"I","ATA":"I" ,"ATG":"M","GTT":"V","GTC":"V","GTA":"V","GTG":"V",
+              'TCT':"S",'TCC':"S", 'TCA':"S", 'TCG':"S", 'AGT':'S', "AGC":"S",'CCT':"P", 'CCC':"P", 'CCA':"P", 'CCG':"P",
+                'ACT':"T", 'ACC':"T", 'ACA':"T", 'ACG':"T",'GCT':"A", 'GCC':"A", 'GCA':"A", 'GCG':"A",
+             "TAT":"Y", "TAC":"Y","TAA":"*","TAG":"*","TGA":"*",'CAT':"H", 'CAC':"H",'CAA':"Q", 'CAG':"Q",
+            'AAT':"N", 'AAC':"N",	'AAA':"K", 'AAG':"K",'GAT':"D", 'GAC':"D",'GAA':"E", 'GAG':"E",'TGT':"C", 'TGC':"C",
+             "TGG":"W",'CGT':"R", 'CGC':"R", 'CGA':"R", 'CGG':"R", 'AGA':"R", 'AGG':"R",'GGT':"G", 'GGC':"G", 'GGA':"G", 'GGG':"G"
+            }
+
+mass={"G":57,"A":71,"S":87,"P":97,"V":99,"T":101,"C":103,"I":113,"L":113,"N":114,"D":115,"K":128,"Q":128,"E":129,"M":131,"H":137,"F":147,"R":156,"Y":163,"W":186}
+reverse_mass={v:k for k,v in mass.items() }
+
+def reverse_compliment(dna):
+    basedic={"A":"T","T":"A","G":"C","C":"G"}
+    reversing=[basedic[base] for base in dna[::-1]]
+    return "".join(reversing)
+
+def find_pattern(dna,AA_pattern,rrr=True):
+    k=len(AA_pattern)
+    for i in range(0,len(dna)-len(AA_pattern)+1):
+        if translation[dna[i:i+3]]!=AA_pattern[0]:
+            continue
+        match=True
+        for j in range(1,len(AA_pattern)):
+            if translation[dna[int(i+j*3):int(i+(j+1)*3)]]!=AA_pattern[j]:
+                match=False
+                break
+        if match:
+            if not rrr:
+                print(reverse_compliment(dna[i:i+k*3]))
+            else:
+                print(dna[i:int(i+k*3)])
+    if rrr:
+        find_pattern(reverse_compliment(dna),AA_pattern,False)
+
+def generate_theoretical_cyclic_spectrum(peptide):
+    spectrum=[]
+    hole=[mass[i] for i in peptide]
+    spectrum.append(sum(hole))
+    for i in range(1,len(peptide)):
+        for j in range(len(peptide)):
+            if j<len(peptide)-i+1:
+                spectrum.append(sum(hole[j:j+i]))
+            else:
+                spectrum.append(sum(hole[j:]+hole[:(j+i)%len(peptide)]))
+    spectrum.sort()
+    for i in spectrum:
+        print(i,end=" ")
+    return spectrum
+
+def generate_linear_spectrum(peptide):
+    spectrum = []
+    hole = [mass[i] for i in peptide]
+    spectrum.extend([0,sum(hole)])
+    for i in range(1, len(peptide)):
+        for j in range(1,len(peptide)-i+1):
+            spectrum.append(sum(hole[i:i+j]))
+    spectrum.sort()
+    return spectrum
+
+
+mass_dic={}
+def counting_peptides_with_given_mass(mass):
+    if mass==0:
+        return 1
+    num=0
+    for i in reverse_mass.keys():
+        if mass-i>=0:
+            if mass-i in mass_dic:
+                num+=mass_dic[mass-i]
+            else:
+                num+=counting_peptides_with_given_mass(mass-i)
+    mass_dic[mass]=num
+    return num
+
+def numbered_cycle_spectrum(l):
+    spectrum=[]
+    spectrum.extend([0,sum(l)])
+    for i in range(1,len(l)):
+        for j in range(len(l)):
+            if j<len(l)-i+1:
+                spectrum.append(sum(l[j:j+i]))
+            else:
+                spectrum.append(sum(l[j:]+l[:(j+i)%len(l)]))
+    spectrum.sort()
+    return spectrum
+
+def numbered_linear_spectrum(l):
+    spectrum=[]
+    spectrum.extend([0,sum(l)])
+    for i in range(1,len(l)):
+        for j in range(len(l)-i+1):
+            spectrum.append(sum(l[j:j+i]))
+    spectrum.sort()
+    return spectrum
+
+
+def cycle_peptide_sequencing(spectrum):
+    peptides=[[i] for i in reverse_mass]
+    output=[]
+    while peptides:
+        peptide_next=[]
+        for peptide in peptides:
+            pep_spectrum=numbered_linear_spectrum(peptide)
+            inside=True
+            for i in pep_spectrum:
+                if i not in spectrum:
+                    inside=False
+                    break
+            if inside:
+                cycle_spectrum=numbered_cycle_spectrum(peptide)
+                if cycle_spectrum==spectrum:
+                    output.append(peptide)
+                else:
+                    peptide_next.append(peptide)
+        peptide_next=[i+[j] for i in peptide_next for j in reverse_mass]
+        peptides=peptide_next
+    print(output)
+    return output
+
