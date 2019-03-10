@@ -1,0 +1,179 @@
+mass={"G":57,"A":71,"S":87,"P":97,"V":99,"T":101,"C":103,"I":113,"L":113,"N":114,"D":115,"K":128,"Q":128,"E":129,"M":131,"H":137,"F":147,"R":156,"Y":163,"W":186}
+reverse_mass={v:k for k,v in mass.items() }
+
+def generate_theoretical_cyclic_spectrum(peptide):
+    spectrum=[]
+    hole=[mass[i] for i in peptide]
+    spectrum.extend([0,sum(hole)])
+    for i in range(1,len(peptide)):
+        for j in range(len(peptide)):
+            if j<len(peptide)-i+1:
+                spectrum.append(sum(hole[j:j+i]))
+            else:
+                spectrum.append(sum(hole[j:]+hole[:(j+i)%len(peptide)]))
+    spectrum.sort()
+    return spectrum
+
+def numbered_cycle_spectrum(l):
+    spectrum=[]
+    spectrum.extend([0,sum(l)])
+    for i in range(1,len(l)):
+        for j in range(len(l)):
+            if j<len(l)-i+1:
+                spectrum.append(sum(l[j:j+i]))
+            else:
+                spectrum.append(sum(l[j:]+l[:(j+i)%len(l)]))
+    spectrum.sort()
+    return spectrum
+
+def numbered_linear_spectrum(l):
+    spectrum=[]
+    spectrum.extend([0,sum(l)])
+    for i in range(1,len(l)):
+        for j in range(len(l)-i+1):
+            spectrum.append(sum(l[j:j+i]))
+    spectrum.sort()
+    return spectrum
+
+def numbered_cyclopeptide_scoring(peptide,spectrum):
+    spectrum=spectrum[:]
+    score=0
+    theo=numbered_cycle_spectrum(peptide)
+    for i in theo:
+        if i in spectrum:
+            spectrum.remove(i)
+            score+=1
+    return score
+
+
+def peptide_number_scoring(numbers,spectrum):
+    spectrum=spectrum[:]
+    number_spec=numbered_linear_spectrum(numbers)
+    score=0
+    for i in number_spec:
+        if i in spectrum:
+            spectrum.remove(i)
+            score+=1
+    return score
+
+
+
+def code(peptide):
+    return "-".join([str(i) for i in peptide])
+
+
+def leaderbroad_cycle_peptide_sequencing(Spectrum,N):
+    score_dic={}
+    li_score_dic={}
+    def trim(peptides,Spectrum,N):
+        score={}
+        for peptide in peptides:
+            linear_pep_score=peptide_number_scoring(peptide,Spectrum)
+            entry=score.get(linear_pep_score,[])
+            entry.append(peptide)
+            score[linear_pep_score]=entry
+        l=[i for i in score.keys()]
+        l.sort(reverse=True)
+        out=[]
+        i=0
+        while len(out)<min(N,len(peptides)):
+            out.extend(score[l[i] ])
+            i+=1
+        return out
+    peptides=[[i] for i in reverse_mass]
+    max_score=1
+    leaderpeptide = []
+    while peptides:
+        peptides_next=[]
+        for peptide in peptides:
+            if sum(peptide)==Spectrum[-1]:
+                pep_score=numbered_cyclopeptide_scoring(peptide,Spectrum)
+                score_dic[code(peptide)]=pep_score
+                if pep_score>max_score:
+                    leaderpeptide=peptide
+                    max_score=pep_score
+            elif sum(peptide)<Spectrum[-1]:
+                peptides_next.append(peptide)
+        peptides_next = trim(peptides_next, Spectrum, N)
+        print(peptides_next)
+        peptides_next=[i + [j] for i in peptides_next for j in reverse_mass.keys()]
+        peptides=peptides_next
+    print(code(leaderpeptide))
+    return leaderpeptide
+
+def spectral_convolution_problem(spectrum):
+    spectrum=[i for i in spectrum if i!=0]
+    spectrum.sort()
+    convolution=[]
+    for i in range(1,len(spectrum)):
+        aaa=[spectrum[i]-j for j in spectrum[:i]]
+        convolution.extend(aaa)
+    convolution.extend(spectrum)
+    convolution=[i for i in convolution if i!=0]
+    convolution.sort()
+    return convolution
+
+
+def ConvolutionCyclopeptideSequencing(Spectrum,N,M):
+    "ultimate solution at courseNo.2, week4"
+    convolution=spectral_convolution_problem(Spectrum)
+    con_dic={}
+    for i in convolution:
+        if i>=57 and i<=200:
+            con_dic[i]=con_dic.get(i,0)+1
+    conv=[i for i in con_dic.values()]
+    conv.sort(reverse=True)
+    cut=conv[M-1]
+    amino_acids=[k for k,v in con_dic.items() if v >=cut]
+    score_dic = {}
+    li_score_dic = {}
+    def trim(peptides, Spectrum, N):
+        score = {}
+        for peptide in peptides:
+            linear_pep_score = peptide_number_scoring(peptide, Spectrum)
+            entry = score.get(linear_pep_score, [])
+            entry.append(peptide)
+            score[linear_pep_score] = entry
+        l = [i for i in score.keys()]
+        l.sort(reverse=True)
+        out = []
+        i = 0
+        while len(out) < min(N, len(peptides)):
+            out.extend(score[l[i]])
+            i += 1
+        return out
+    peptides = [[i] for i in amino_acids]
+    max_score = 1
+    leaderpeptide = []
+    while peptides:
+        peptides_next = []
+        for peptide in peptides:
+            if sum(peptide) == Spectrum[-1]:
+                pep_score = numbered_cyclopeptide_scoring(peptide, Spectrum)
+                score_dic[code(peptide)] = pep_score
+                if pep_score > max_score:
+                    leaderpeptide = peptide
+                    max_score = pep_score
+            elif sum(peptide) < Spectrum[-1]:
+                peptides_next.append(peptide)
+        peptides_next = trim(peptides_next, Spectrum, N)
+        peptides_next = [i + [j] for i in peptides_next for j in amino_acids]
+        peptides = peptides_next
+    aaa={}
+    for key,value in score_dic.items():
+        entry=aaa.get(value,[])
+        entry.append(key)
+        aaa[value]=entry
+    bbb=[i for i in aaa.keys()]
+    bbb.sort(reverse=True)
+    print(bbb)
+    ccc=[]
+    i=0
+    while len(ccc)<86:
+        ccc.extend(aaa[bbb[i]])
+        i+=1
+    print(len(ccc))
+    for c in ccc:
+        print(c,end=" ")
+    return leaderpeptide
+
